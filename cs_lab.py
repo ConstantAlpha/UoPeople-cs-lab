@@ -1,231 +1,542 @@
-# =====================================================
-# CS LAB CLI - UoPeople Computer Science Portfolio
-# Courses: CS 1102 (Python), CS 1103 (OOP), CS 3303 (Data Structures)
-#          CS 3304 (Algorithms), CS 2203 (Databases)
-# Author: Guardian / UoPeople Student
-# Run: python cs_lab.py
-# =====================================================
+#!/usr/bin/env python3
+"""
+UoPeople CS Lab CLI
+Data Structures & Algorithms demonstrations for:
+  CS 1102 Programming 1 | CS 1103 Programming 2 | CS 3303 Data Structures
+  CS 3304 Analysis of Algorithms | CS 2203 Databases
 
+Run:  python cs_lab.py
+"""
+
+import random
 import time
 from collections import deque
 
-# ---------- 1. STACK (LIFO) - CS 3303 ----------
-# Problem: Undo feature, browser back button
-# Real use: Function calls, expression evaluation
+
+# ---------------------------------------------------------------------------
+# CS 3303 — Stack (LIFO): browser back button / undo
+# ---------------------------------------------------------------------------
 class Stack:
-    def __init__(self): self.items = []
-    def push(self, x): self.items.append(x)
-    def pop(self): return self.items.pop() if self.items else None
-    def peek(self): return self.items[-1] if self.items else None
-    def is_empty(self): return len(self.items) == 0
-    def __str__(self): return str(self.items)
+    def __init__(self):
+        self._items = []
 
-# ---------- 2. QUEUE (FIFO) - CS 3303 ----------
-# Problem: Printer queue, customer service
-# Real use: BFS, task scheduling
+    def push(self, x):
+        self._items.append(x)
+
+    def pop(self):
+        if self.is_empty():
+            raise IndexError("pop from empty stack")
+        return self._items.pop()
+
+    def peek(self):
+        if self.is_empty():
+            raise IndexError("peek from empty stack")
+        return self._items[-1]
+
+    def is_empty(self):
+        return not self._items
+
+    def __len__(self):
+        return len(self._items)
+
+    def __repr__(self):
+        return f"Stack({self._items})"
+
+
+# ---------------------------------------------------------------------------
+# CS 3303 — Queue (FIFO): printer queue / BFS frontier
+# ---------------------------------------------------------------------------
 class Queue:
-    def __init__(self): self.items = deque()
-    def enqueue(self, x): self.items.append(x)
-    def dequeue(self): return self.items.popleft() if self.items else None
-    def __str__(self): return str(list(self.items))
+    def __init__(self):
+        self._items = deque()
 
-# ---------- 3. LINKED LIST - CS 1103 / CS 3303 ----------
-# Problem: Dynamic memory, insert/delete without shifting
-# Why not list? List needs shifting O(n), Linked List O(1) insert
-class Node:
-    def __init__(self, data): self.data = data; self.next = None
+    def enqueue(self, x):
+        self._items.append(x)
+
+    def dequeue(self):
+        if self.is_empty():
+            raise IndexError("dequeue from empty queue")
+        return self._items.popleft()
+
+    def front(self):
+        if self.is_empty():
+            raise IndexError("front of empty queue")
+        return self._items[0]
+
+    def is_empty(self):
+        return not self._items
+
+    def __len__(self):
+        return len(self._items)
+
+    def __repr__(self):
+        return f"Queue({list(self._items)})"
+
+
+# ---------------------------------------------------------------------------
+# CS 3303 — Singly Linked List: O(1) insert/delete at head
+# ---------------------------------------------------------------------------
+class _Node:
+    __slots__ = ("value", "next")
+
+    def __init__(self, value, next=None):
+        self.value = value
+        self.next = next
+
 
 class LinkedList:
-    def __init__(self): self.head = None
-    def insert(self, data):
-        new = Node(data)
-        new.next = self.head
-        self.head = new
-    def delete(self, data):
-        cur = self.head; prev = None
-        while cur:
-            if cur.data == data:
-                if prev: prev.next = cur.next
-                else: self.head = cur.next
-                return True
-            prev, cur = cur, cur.next
-        return False
-    def display(self):
-        out = []; cur = self.head
-        while cur: out.append(str(cur.data)); cur = cur.next
-        return " -> ".join(out) + " -> None"
+    def __init__(self):
+        self.head = None
+        self._size = 0
 
-# ---------- 4. BINARY SEARCH TREE - CS 3303 ----------
-# Problem: Fast searching O(log n) vs linear O(n)
-# Real use: Databases, file systems
-class BSTNode:
-    def __init__(self, key): self.key = key; self.left = None; self.right = None
+    def insert_head(self, value):
+        self.head = _Node(value, self.head)
+        self._size += 1
+
+    def delete_head(self):
+        if self.head is None:
+            raise IndexError("delete from empty list")
+        val = self.head.value
+        self.head = self.head.next
+        self._size -= 1
+        return val
+
+    def insert_tail(self, value):
+        node = _Node(value)
+        if self.head is None:
+            self.head = node
+        else:
+            cur = self.head
+            while cur.next:
+                cur = cur.next
+            cur.next = node
+        self._size += 1
+
+    def search(self, value):
+        cur, idx = self.head, 0
+        while cur:
+            if cur.value == value:
+                return idx
+            cur, idx = cur.next, idx + 1
+        return -1
+
+    def to_list(self):
+        out, cur = [], self.head
+        while cur:
+            out.append(cur.value)
+            cur = cur.next
+        return out
+
+    def __len__(self):
+        return self._size
+
+    def __repr__(self):
+        return f"LinkedList({self.to_list()})"
+
+
+# ---------------------------------------------------------------------------
+# CS 3303 — Binary Search Tree: average O(log n) search
+# ---------------------------------------------------------------------------
+class _BSTNode:
+    __slots__ = ("key", "left", "right")
+
+    def __init__(self, key):
+        self.key = key
+        self.left = None
+        self.right = None
+
 
 class BST:
-    def __init__(self): self.root = None
+    def __init__(self):
+        self.root = None
+
     def insert(self, key):
-        def _insert(node, key):
-            if not node: return BSTNode(key)
-            if key < node.key: node.left = _insert(node.left, key)
-            elif key > node.key: node.right = _insert(node.right, key)
-            return node
-        self.root = _insert(self.root, key)
+        if self.root is None:
+            self.root = _BSTNode(key)
+            return
+        cur = self.root
+        while True:
+            if key < cur.key:
+                if cur.left is None:
+                    cur.left = _BSTNode(key)
+                    return
+                cur = cur.left
+            elif key > cur.key:
+                if cur.right is None:
+                    cur.right = _BSTNode(key)
+                    return
+                cur = cur.right
+            else:
+                return  # duplicate ignored
+
     def search(self, key):
         cur = self.root
-        steps = 0
         while cur:
-            steps += 1
-            if key == cur.key: return True, steps
+            if key == cur.key:
+                return True
             cur = cur.left if key < cur.key else cur.right
-        return False, steps
-    def inorder(self):
-        res = []
-        def _walk(n):
-            if n: _walk(n.left); res.append(n.key); _walk(n.right)
-        _walk(self.root); return res
+        return False
 
-# ---------- 5. HASH TABLE - CS 2203 / CS 3303 ----------
-# Problem: Fast lookup by key, like Python dict
-# Real use: Databases, caches, Guardian blocklist
+    def inorder(self):
+        out = []
+        stack, cur = [], self.root
+        while stack or cur:
+            while cur:
+                stack.append(cur)
+                cur = cur.left
+            cur = stack.pop()
+            out.append(cur.key)
+            cur = cur.right
+        return out
+
+    def height(self):
+        def _h(n):
+            if n is None:
+                return 0
+            return 1 + max(_h(n.left), _h(n.right))
+        return _h(self.root)
+
+
+# ---------------------------------------------------------------------------
+# CS 3303 — Hash Table: O(1) average lookup (Guardian-style blocklist)
+# Separate chaining with Python dicts as buckets.
+# ---------------------------------------------------------------------------
 class HashTable:
-    def __init__(self, size=10): self.size = size; self.table = [[] for _ in range(size)]
-    def _hash(self, key): return hash(key) % self.size
+    def __init__(self, capacity=16):
+        self._cap = capacity
+        self._buckets = [[] for _ in range(capacity)]
+        self._size = 0
+
+    def _hash(self, key):
+        # Deterministic string hash compatible across runs
+        h = 5381
+        for ch in str(key):
+            h = ((h << 5) + h) + ord(ch)
+        return h % self._cap
+
     def put(self, key, value):
-        idx = self._hash(key)
-        for pair in self.table[idx]:
-            if pair[0] == key: pair[1] = value; return
-        self.table[idx].append([key, value])
+        b = self._buckets[self._hash(key)]
+        for i, (k, _) in enumerate(b):
+            if k == key:
+                b[i] = (key, value)
+                return
+        b.append((key, value))
+        self._size += 1
+        if self._size > self._cap * 0.75:
+            self._resize()
+
     def get(self, key):
-        idx = self._hash(key)
-        for k, v in self.table[idx]:
-            if k == key: return v
+        for k, v in self._buckets[self._hash(key)]:
+            if k == key:
+                return v
         return None
 
-# ---------- 6. GRAPH + BFS / DFS - CS 3304 ----------
-# Problem: Shortest path, social network, Guardian site map
-class Graph:
-    def __init__(self): self.adj = {}
-    def add_edge(self, a, b):
-        self.adj.setdefault(a, []).append(b)
-        self.adj.setdefault(b, []).append(a)
-    def bfs(self, start):
-        visited, queue, order = set([start]), deque([start]), []
-        while queue:
-            node = queue.popleft(); order.append(node)
-            for n in self.adj.get(node, []):
-                if n not in visited: visited.add(n); queue.append(n)
-        return order
-    def dfs(self, start):
-        visited, order = set(), []
-        def _dfs(n):
-            visited.add(n); order.append(n)
-            for nb in self.adj.get(n, []):
-                if nb not in visited: _dfs(nb)
-        _dfs(start); return order
+    def delete(self, key):
+        b = self._buckets[self._hash(key)]
+        for i, (k, _) in enumerate(b):
+            if k == key:
+                b.pop(i)
+                self._size -= 1
+                return True
+        return False
 
-# ---------- 7. SORTING & SEARCHING - CS 3304 ----------
+    def _resize(self):
+        old = self._buckets
+        self._cap *= 2
+        self._buckets = [[] for _ in range(self._cap)]
+        self._size = 0
+        for bucket in old:
+            for k, v in bucket:
+                self.put(k, v)
+
+    def __len__(self):
+        return self._size
+
+
+# ---------------------------------------------------------------------------
+# CS 3303 — Graph: adjacency list, BFS vs DFS
+# ---------------------------------------------------------------------------
+class Graph:
+    def __init__(self, directed=False):
+        self.adj = {}
+        self.directed = directed
+
+    def add_edge(self, u, v):
+        self.adj.setdefault(u, []).append(v)
+        self.adj.setdefault(v, [])
+        if not self.directed:
+            self.adj[v].append(u)
+
+    def bfs(self, start):
+        if start not in self.adj:
+            return []
+        visited, order, q = {start}, [], deque([start])
+        while q:
+            u = q.popleft()
+            order.append(u)
+            for v in self.adj[u]:
+                if v not in visited:
+                    visited.add(v)
+                    q.append(v)
+        return order
+
+    def dfs(self, start):
+        if start not in self.adj:
+            return []
+        visited, order = set(), []
+
+        def _visit(u):
+            visited.add(u)
+            order.append(u)
+            for v in self.adj[u]:
+                if v not in visited:
+                    _visit(v)
+
+        _visit(start)
+        return order
+
+
+# ---------------------------------------------------------------------------
+# CS 3304 — Sorting: Bubble O(n^2) vs Quick O(n log n) average
+# ---------------------------------------------------------------------------
 def bubble_sort(arr):
-    arr = arr[:]; n = len(arr)
+    a = list(arr)
+    n = len(a)
     for i in range(n):
-        for j in range(n-i-1):
-            if arr[j] > arr[j+1]: arr[j], arr[j+1] = arr[j+1], arr[j]
-    return arr
+        swapped = False
+        for j in range(n - 1 - i):
+            if a[j] > a[j + 1]:
+                a[j], a[j + 1] = a[j + 1], a[j]
+                swapped = True
+        if not swapped:
+            break
+    return a
+
 
 def quick_sort(arr):
-    if len(arr) <= 1: return arr
-    pivot = arr[len(arr)//2]
+    if len(arr) <= 1:
+        return list(arr)
+    pivot = arr[len(arr) // 2]
     left = [x for x in arr if x < pivot]
     mid = [x for x in arr if x == pivot]
     right = [x for x in arr if x > pivot]
     return quick_sort(left) + mid + quick_sort(right)
 
-def binary_search(arr, target):
-    low, high, steps = 0, len(arr)-1, 0
-    while low <= high:
-        steps += 1
-        mid = (low+high)//2
-        if arr[mid] == target: return mid, steps
-        elif arr[mid] < target: low = mid+1
-        else: high = mid-1
-    return -1, steps
 
-# ---------- CLI ----------
-def main():
-    stack = Stack(); queue = Queue(); ll = LinkedList()
-    bst = BST(); ht = HashTable(); graph = Graph()
-    # Pre-load Graph: UoPeople courses
-    for a,b in [("CS1102","CS1103"),("CS1103","CS3303"),("CS3303","CS3304"),("CS1102","CS2203"),("CS2203","CS3303")]:
-        graph.add_edge(a,b)
-    for v in [50,30,70,20,40,60,80]: bst.insert(v)
+# ---------------------------------------------------------------------------
+# Interactive CLI
+# ---------------------------------------------------------------------------
+def _pause():
+    input("\nPress Enter to continue...")
 
+
+def _print_header(title):
+    print("\n" + "=" * 60)
+    print(title)
+    print("=" * 60)
+
+
+def menu_stack():
+    _print_header("Stack (LIFO) — Undo / Back button")
+    s = Stack()
     while True:
-        print("\n" + "="*50)
-        print("  🎓 UoPeople CS LAB - Data Structures & Algorithms")
-        print("="*50)
-        print("1. Stack (LIFO) - Undo / Back button")
-        print("2. Queue (FIFO) - Printer / BFS")
-        print("3. Linked List - Dynamic Insert/Delete")
-        print("4. Binary Search Tree - O(log n) Search")
-        print("5. Hash Table - Fast Lookup (like Guardian blocklist)")
-        print("6. Graph BFS vs DFS - Course Map")
-        print("7. Sorting - Bubble vs Quick Sort + Binary Search")
-        print("8. Run ALL Demos (for assignment)")
-        print("0. Exit")
-        choice = input("\nChoose (0-8): ").strip()
-
+        print(f"\nCurrent: {s}")
+        print(" 1) push   2) pop   3) peek   4) back")
+        choice = input("> ").strip()
         if choice == "1":
-            print("\n--- STACK Demo ---")
-            for x in ["CS1102","CS1103","CS3303"]: stack.push(x); print(f"push({x}) -> {stack}")
-            print(f"pop() -> {stack.pop()} | Now: {stack}")
-            print(f"peek() -> {stack.peek()} | Problem solved: Undo works LIFO")
+            s.push(input("Value to push: "))
         elif choice == "2":
-            print("\n--- QUEUE Demo ---")
-            for x in ["Student1","Student2","Student3"]: queue.enqueue(x); print(f"enqueue({x}) -> {queue}")
-            print(f"dequeue() -> {queue.dequeue()} | First in, first out")
+            try:
+                print(f"Popped: {s.pop()}")
+            except IndexError as e:
+                print(f"Error: {e}")
         elif choice == "3":
-            print("\n--- LINKED LIST Demo ---")
-            for x in [10,20,30]: ll.insert(x); print(f"insert({x}) -> {ll.display()}")
-            ll.delete(20); print(f"delete(20) -> {ll.display()} | No shifting needed!")
+            try:
+                print(f"Top: {s.peek()}")
+            except IndexError as e:
+                print(f"Error: {e}")
         elif choice == "4":
-            print("\n--- BST Demo ---")
-            print(f"Inorder (sorted): {bst.inorder()}")
-            target = int(input("Search for number (e.g. 40): ") or "40")
-            found, steps = bst.search(target)
-            print(f"Search {target}: Found={found} in {steps} steps vs 7 steps linear")
+            return
+
+
+def menu_queue():
+    _print_header("Queue (FIFO) — Printer queue")
+    q = Queue()
+    while True:
+        print(f"\nCurrent: {q}")
+        print(" 1) enqueue   2) dequeue   3) front   4) back")
+        choice = input("> ").strip()
+        if choice == "1":
+            q.enqueue(input("Job name: "))
+        elif choice == "2":
+            try:
+                print(f"Dequeued: {q.dequeue()}")
+            except IndexError as e:
+                print(f"Error: {e}")
+        elif choice == "3":
+            try:
+                print(f"Front: {q.front()}")
+            except IndexError as e:
+                print(f"Error: {e}")
+        elif choice == "4":
+            return
+
+
+def menu_linked_list():
+    _print_header("Linked List — O(1) insert/delete at head")
+    ll = LinkedList()
+    while True:
+        print(f"\nCurrent: {ll.to_list()}  (size={len(ll)})")
+        print(" 1) insert head  2) insert tail  3) delete head  4) search  5) back")
+        choice = input("> ").strip()
+        if choice == "1":
+            ll.insert_head(input("Value: "))
+        elif choice == "2":
+            ll.insert_tail(input("Value: "))
+        elif choice == "3":
+            try:
+                print(f"Deleted: {ll.delete_head()}")
+            except IndexError as e:
+                print(f"Error: {e}")
+        elif choice == "4":
+            val = input("Value to find: ")
+            idx = ll.search(val)
+            print(f"Found at index {idx}" if idx >= 0 else "Not found")
         elif choice == "5":
-            print("\n--- HASH TABLE Demo (Guardian) ---")
-            ht.put("pornhub.com","BLOCKED"); ht.put("wikipedia.org","ALLOWED")
-            print(f"pornhub.com -> {ht.get('pornhub.com')}")
-            print(f"wikipedia.org -> {ht.get('wikipedia.org')}")
-            print("Problem solved: O(1) lookup, not O(n) scanning list")
-        elif choice == "6":
-            print("\n--- GRAPH Demo ---")
-            print(f"BFS from CS1102: {graph.bfs('CS1102')}")
-            print(f"DFS from CS1102: {graph.dfs('CS1102')}")
-            print("BFS = shortest path, DFS = explore deep")
-        elif choice == "7":
-            print("\n--- SORTING Demo ---")
-            arr = [64,34,25,12,22,11,90]
-            print(f"Original: {arr}")
-            start=time.time(); print(f"Bubble Sort: {bubble_sort(arr)} | O(n^2)")
-            print(f"Quick Sort: {quick_sort(arr)} | O(n log n) - faster!")
-            sorted_arr = quick_sort(arr)
-            idx, steps = binary_search(sorted_arr, 22)
-            print(f"Binary Search 22: index {idx} in {steps} steps vs 7 linear")
-        elif choice == "8":
-            print("\n=== RUNNING ALL FOR ASSIGNMENT ===")
-            print(f"Stack: push A,B,C -> pop = C (LIFO)")
-            print(f"Queue: enqueue A,B,C -> dequeue = A (FIFO)")
-            print(f"Linked List: 10->20->30, delete 20 -> 10->30")
-            print(f"BST: {bst.inorder()} - search is O(log n)")
-            print(f"Hash: Guardian blocklist O(1)")
-            print(f"Graph BFS: {graph.bfs('CS1102')}")
-            print(f"Quick Sort beats Bubble Sort for large data")
-            print("\n✅ All concepts demonstrated!")
-        elif choice == "0":
-            print("Bye! Good luck in UoPeople 🎓"); break
+            return
+
+
+def menu_bst():
+    _print_header("Binary Search Tree — O(log n) search (average)")
+    tree = BST()
+    while True:
+        print(f"\nIn-order: {tree.inorder()}  height={tree.height()}")
+        print(" 1) insert  2) search  3) back")
+        choice = input("> ").strip()
+        if choice == "1":
+            try:
+                tree.insert(int(input("Integer key: ")))
+            except ValueError:
+                print("Please enter an integer.")
+        elif choice == "2":
+            try:
+                k = int(input("Search key: "))
+                print("Found" if tree.search(k) else "Not found")
+            except ValueError:
+                print("Please enter an integer.")
+        elif choice == "3":
+            return
+
+
+def menu_hash_table():
+    _print_header("Hash Table — O(1) average lookup (blocklist demo)")
+    ht = HashTable()
+    while True:
+        print(f"\nSize: {len(ht)}")
+        print(" 1) put  2) get  3) delete  4) back")
+        choice = input("> ").strip()
+        if choice == "1":
+            ht.put(input("Key: "), input("Value: "))
+        elif choice == "2":
+            k = input("Key: ")
+            v = ht.get(k)
+            print(f"{k} -> {v}" if v is not None else f"{k} not in table")
+        elif choice == "3":
+            print("Deleted" if ht.delete(input("Key: ")) else "Key not found")
+        elif choice == "4":
+            return
+
+
+def menu_graph():
+    _print_header("Graph — BFS vs DFS")
+    print("Building demo graph:  A-B, A-C, B-D, C-E, D-E")
+    g = Graph()
+    for u, v in [("A", "B"), ("A", "C"), ("B", "D"), ("C", "E"), ("D", "E")]:
+        g.add_edge(u, v)
+    while True:
+        start = input("\nStart node (or 'q' to go back): ").strip()
+        if start.lower() == "q":
+            return
+        print(f"BFS from {start}: {g.bfs(start)}")
+        print(f"DFS from {start}: {g.dfs(start)}")
+
+
+def menu_sorting():
+    _print_header("Sorting — Bubble O(n^2) vs Quick O(n log n)")
+    while True:
+        print("\n 1) Sort small custom list  2) Benchmark both  3) back")
+        choice = input("> ").strip()
+        if choice == "1":
+            raw = input("Numbers (comma-separated): ")
+            try:
+                nums = [int(x) for x in raw.split(",") if x.strip()]
+            except ValueError:
+                print("Invalid input.")
+                continue
+            print(f"Bubble: {bubble_sort(nums)}")
+            print(f"Quick : {quick_sort(nums)}")
+        elif choice == "2":
+            size = input("List size (e.g. 500): ").strip()
+            try:
+                n = int(size)
+            except ValueError:
+                print("Invalid size.")
+                continue
+            data = [random.randint(1, 100_000) for _ in range(n)]
+            t0 = time.perf_counter()
+            bubble_sort(data)
+            t1 = time.perf_counter()
+            quick_sort(data)
+            t2 = time.perf_counter()
+            print(f"Bubble sort: {t1 - t0:.4f} s")
+            print(f"Quick  sort: {t2 - t1:.4f} s")
+        elif choice == "3":
+            return
+
+
+MAIN_MENU = """
+┌──────────────────────────────────────────────────────────┐
+│  UoPeople CS Lab CLI                                     │
+├──────────────────────────────────────────────────────────┤
+│  1) Stack        (CS 3303 — LIFO / Undo)                 │
+│  2) Queue        (CS 3303 — FIFO / Printer)              │
+│  3) Linked List  (CS 3303 — O(1) head ops)               │
+│  4) BST          (CS 3303 — O(log n) search)             │
+│  5) Hash Table   (CS 3303 — O(1) lookup)                 │
+│  6) Graph        (CS 3303 — BFS vs DFS)                  │
+│  7) Sorting      (CS 3304 — Bubble vs Quick)             │
+│  0) Exit                                                 │
+└──────────────────────────────────────────────────────────┘
+"""
+
+HANDLERS = {
+    "1": menu_stack,
+    "2": menu_queue,
+    "3": menu_linked_list,
+    "4": menu_bst,
+    "5": menu_hash_table,
+    "6": menu_graph,
+    "7": menu_sorting,
+}
+
+
+def main():
+    while True:
+        print(MAIN_MENU)
+        choice = input("Select: ").strip()
+        if choice == "0":
+            print("Goodbye.")
+            return
+        handler = HANDLERS.get(choice)
+        if handler:
+            handler()
+            _pause()
         else:
-            print("Invalid choice")
+            print("Invalid option.")
+
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except (KeyboardInterrupt, EOFError):
+        print("\nInterrupted.")
